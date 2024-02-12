@@ -35,9 +35,32 @@
             }
         }
 
-        function mostrarTextoEnTitulo(texto) {
+        async function mostrarTextoEnTitulo(texto) {
             const qrCodeTextElement = document.getElementById('qrCodeText');
             qrCodeTextElement.innerText = `Código escaneado: ${texto}`;
+
+            // Verifica si el texto es un enlace (URL) y, en caso afirmativo, realiza acciones adicionales
+            if (/^(http|https):\/\/.+$/i.test(texto)) {
+                const abrirEnlace = confirm('¿Deseas abrir el enlace escaneado?');
+
+                if (abrirEnlace) {
+                    // Realiza una solicitud HTTP para obtener el contenido de la página
+                    try {
+                        const response = await fetch(texto);
+                        const htmlText = await response.text();
+
+                        // Extrae el texto del título de la página
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(htmlText, 'text/html');
+                        const pageTitle = doc.head.querySelector('title').innerText;
+
+                        // Muestra el texto del título en el título de la página actual
+                        document.title = `Código escaneado: ${pageTitle}`;
+                    } catch (error) {
+                        console.error('Error al obtener y mostrar el título de la página:', error);
+                    }
+                }
+            }
         }
     </script>
 </body>
