@@ -9,7 +9,7 @@
     <button onclick="iniciarEscaneo()">Abrir Cámara y Escanear</button>
     <h1 id="qrCodeText">Texto del Código</h1>
 
-    <script src="https://cdn.jsdelivr.net/npm/quagga@0.12.1/dist/quagga.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/quagga"></script>
 
     <script>
         async function iniciarEscaneo() {
@@ -28,7 +28,8 @@
                 if (resultadoQR.length > 0) {
                     mostrarTextoEnTitulo(resultadoQR[0].rawValue);
                 } else {
-                    // Si no se detecta un código QR, intentar con códigos de barras usando QuaggaJS
+                    console.log('No se detectó un código QR. Iniciando QuaggaJS para códigos de barras...');
+
                     Quagga.init({
                         inputStream: {
                             name: "Live",
@@ -43,16 +44,18 @@
                             console.error('Error al inicializar QuaggaJS:', err);
                             return;
                         }
+                        console.log('QuaggaJS iniciado correctamente. Esperando detección de códigos de barras...');
                         Quagga.start();
                         Quagga.onDetected(function (result) {
+                            console.log('Código de barras detectado:', result.codeResult.code);
                             Quagga.stop();
                             mostrarTextoEnTitulo(result.codeResult.code);
                         });
                     });
                 }
 
-                video.srcObject.getTracks().forEach(track => track.stop());
-                document.body.removeChild(video);
+                // No detenemos la cámara aquí para permitir un tiempo de visualización después del escaneo
+
             } catch (error) {
                 console.error('Error al iniciar la cámara:', error);
             }
