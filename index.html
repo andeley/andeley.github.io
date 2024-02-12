@@ -6,8 +6,9 @@
     <title>Lector de Código QR</title>
 </head>
 <body>
-    <button onclick="iniciarEscaneo()">Abrir Cámara y Escanear2</button>
-    
+    <button onclick="iniciarEscaneo()">Abrir Cámara y Escanear</button>
+    <h1 id="qrCodeText">Texto del Código QR</h1>
+
     <script>
         async function iniciarEscaneo() {
             try {
@@ -22,7 +23,7 @@
 
                 const resultado = await barcodeDetector.detect(video);
                 if (resultado.length > 0) {
-                    alert('Código escaneado: ' + resultado[0].rawValue);
+                    mostrarTextoEnTitulo(resultado[0].rawValue);
                 } else {
                     alert('No se detectaron códigos.');
                 }
@@ -32,6 +33,11 @@
             } catch (error) {
                 console.error('Error al iniciar la cámara:', error);
             }
+        }
+
+        function mostrarTextoEnTitulo(texto) {
+            const qrCodeTextElement = document.getElementById('qrCodeText');
+            qrCodeTextElement.innerText = `Código escaneado: ${texto}`;
         }
     </script>
 </body>
