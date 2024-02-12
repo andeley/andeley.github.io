@@ -8,12 +8,12 @@
     <script src="https://cdn.jsdelivr.net/npm/quagga"></script>
 </head>
 <body>
-    <button onclick="iniciarEscaneo()">Abrir Cámara y Escanear</button>
+    <button onclick="solicitarCamaras()">Seleccionar Cámara y Escanear</button>
 
     <script>
         let currentStream;
 
-        async function iniciarEscaneo() {
+        async function solicitarCamaras() {
             try {
                 if (currentStream) {
                     // Si hay un stream actual, detener y cerrar antes de abrir uno nuevo
@@ -28,7 +28,12 @@
                     return;
                 }
 
-                const selectedCamera = videoDevices[0]; // Selecciona la primera cámara
+                const selectedCamera = await seleccionarCamaras(videoDevices);
+
+                if (!selectedCamera) {
+                    console.error('No se seleccionó ninguna cámara.');
+                    return;
+                }
 
                 currentStream = await navigator.mediaDevices.getUserMedia({
                     video: {
@@ -36,42 +41,64 @@
                     }
                 });
 
-                const video = document.createElement('video');
-                document.body.appendChild(video);
-
-                video.srcObject = currentStream;
-                await video.play();
-
-                const scannerQR = new Instascan.Scanner({ video: video });
-                scannerQR.addListener('scan', function (content) {
-                    mostrarTextoEnTitulo(content);
-                });
-
-                const scannerBarcode = Quagga;
-                scannerBarcode.onDetected(function (result) {
-                    mostrarTextoEnTitulo(result.codeResult.code);
-                });
-
-                scannerQR.start();
-
-                setTimeout(() => {
-                    scannerQR.stop();
-                    scannerBarcode.init({
-                        inputStream: {
-                            name: "Live",
-                            type: "LiveStream",
-                            target: video
-                        },
-                        decoder: {
-                            readers: ["ean_reader", "upc_reader"]
-                        }
-                    });
-                    scannerBarcode.start();
-                }, 5000);
+                abrirCamara(currentStream);
 
             } catch (error) {
                 console.error('Error al iniciar la cámara:', error);
             }
+        }
+
+        async function seleccionarCamaras(cameras) {
+            return new Promise(resolve => {
+                const options = cameras.map((camera, index) => ({
+                    label: `Cámara ${index + 1}`,
+                    value: camera.deviceId,
+                }));
+
+                const selectedCamera = window.prompt('Seleccione una cámara:\n\n' + options.map(opt => `${opt.label}: ${opt.value}`).join('\n'));
+                
+                if (selectedCamera) {
+                    const camera = cameras.find(cam => cam.deviceId === selectedCamera);
+                    resolve(camera);
+                } else {
+                    resolve(null);
+                }
+            });
+        }
+
+        async function abrirCamara(stream) {
+            const video = document.createElement('video');
+            document.body.appendChild(video);
+
+            video.srcObject = stream;
+            await video.play();
+
+            const scannerQR = new Instascan.Scanner({ video: video });
+            scannerQR.addListener('scan', function (content) {
+                mostrarTextoEnTitulo(content);
+            });
+
+            const scannerBarcode = Quagga;
+            scannerBarcode.onDetected(function (result) {
+                mostrarTextoEnTitulo(result.codeResult.code);
+            });
+
+            scannerQR.start();
+
+            setTimeout(() => {
+                scannerQR.stop();
+                scannerBarcode.init({
+                    inputStream: {
+                        name: "Live",
+                        type: "LiveStream",
+                        target: video
+                    },
+                    decoder: {
+                        readers: ["ean_reader", "upc_reader"]
+                    }
+                });
+                scannerBarcode.start();
+            }, 5000);
         }
 
         function mostrarTextoEnTitulo(texto) {
