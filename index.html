@@ -1,25 +1,38 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <title>Instascan</title>
-    <script type="text/javascript" src="instascan.min.js"></script>
-  </head>
-  <body>
-    <video id="preview"></video>
-    <script type="text/javascript">
-      let scanner = new Instascan.Scanner({ video: document.getElementById('preview') });
-      scanner.addListener('scan', function (content) {
-        console.log(content);
-      });
-      Instascan.Camera.getCameras().then(function (cameras) {
-        if (cameras.length > 0) {
-          scanner.start(cameras[0]);
-        } else {
-          console.error('No cameras found.');
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lector de Código QR</title>
+</head>
+<body>
+    <button onclick="iniciarEscaneo()">Abrir Cámara y Escanear</button>
+    
+    <script>
+        async function iniciarEscaneo() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                const video = document.createElement('video');
+                document.body.appendChild(video);
+
+                video.srcObject = stream;
+                await video.play();
+
+                const barcodeDetector = new BarcodeDetector();
+
+                const resultado = await barcodeDetector.detect(video);
+                if (resultado.length > 0) {
+                    alert('Código escaneado: ' + resultado[0].rawValue);
+                } else {
+                    alert('No se detectaron códigos.');
+                }
+
+                video.srcObject.getTracks().forEach(track => track.stop());
+                document.body.removeChild(video);
+            } catch (error) {
+                console.error('Error al iniciar la cámara:', error);
+            }
         }
-      }).catch(function (e) {
-        console.error(e);
-      });
     </script>
-  </body>
+</body>
 </html>
