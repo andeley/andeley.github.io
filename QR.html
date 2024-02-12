@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lector de Códigos</title>
+    <script src="https://rawgit.com/schmich/instascan-builds/master/instascan.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/quagga"></script>
+</head>
+<body>
+    <label>
+        <input type="radio" name="codeType" value="qr" checked> Código QR
+    </label>
+    <label>
+        <input type="radio" name="codeType" value="barcode"> Código de barras
+    </label>
+
+    <div id="scanner-container">
+        <!-- Contenedor para mostrar la cámara y el resultado del escaneo -->
+        <video id="video-preview"></video>
+        <p id="result"></p>
+    </div>
+
+    <!-- Script para manejar el escaneo QR o de códigos de barras -->
+    <script>
+        const codeTypeRadios = document.getElementsByName('codeType');
+        const scannerContainer = document.getElementById('scanner-container');
+        const video = document.getElementById('video-preview');
+        const resultContainer = document.getElementById('result');
+        let scanner = null;
+
+        function startScanner(scannerType) {
+            if (scanner) {
+                scanner.stop();
+            }
+
+            if (scannerType === 'qr') {
+                scanner = new Instascan.Scanner({ video: video });
+                scanner.addListener('scan', handleQRScan);
+            } else if (scannerType === 'barcode') {
+                scanner = Quagga;
+                scanner.onDetected(handleBarcodeScan);
+            }
+
+            scanner.start();
+        }
+
+        function handleQRScan(content) {
+            resultContainer.textContent = 'Contenido del código QR: ' + content;
+        }
+
+        function handleBarcodeScan(result) {
+            resultContainer.textContent = 'Código de barras detectado: ' + result.codeResult.code;
+        }
+
+        // Inicializar el escáner con el tipo seleccionado por defecto
+        const defaultCodeType = document.querySelector('input[name="codeType"]:checked').value;
+        startScanner(defaultCodeType);
+
+        // Cambiar el tipo de escáner cuando cambia la opción seleccionada
+        codeTypeRadios.forEach(function (radio) {
+            radio.addEventListener('change', function () {
+                const selectedCodeType = document.querySelector('input[name="codeType"]:checked').value;
+                startScanner(selectedCodeType);
+            });
+        });
+    </script>
+</body>
+</html>
