@@ -23,6 +23,7 @@
 
     <!-- Script para manejar el escaneo QR o de códigos de barras -->
     <script>
+        var Instascan = require('instascan');
         const codeTypeRadios = document.getElementsByName('codeType');
         const scannerContainer = document.getElementById('scanner-container');
         const video = document.getElementById('video-preview');
