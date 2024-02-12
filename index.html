@@ -27,7 +27,7 @@
 
                 const scannerQR = new Instascan.Scanner({ video: video });
                 scannerQR.addListener('scan', function (content) {
-                    alert('Código QR detectado: ' + content);
+                    mostrarTextoEnTitulo(content); // Llama a la función para mostrar el texto en el título
                     scannerQR.stop();
                     video.srcObject.getTracks().forEach(track => track.stop());
                     document.body.removeChild(video);
@@ -35,16 +35,14 @@
 
                 const scannerBarcode = Quagga;
                 scannerBarcode.onDetected(function (result) {
-                    alert('Código de barras detectado: ' + result.codeResult.code);
+                    mostrarTextoEnTitulo(result.codeResult.code);
                     scannerBarcode.stop();
                     video.srcObject.getTracks().forEach(track => track.stop());
                     document.body.removeChild(video);
                 });
 
-                // Iniciar con el escáner QR por defecto
                 scannerQR.start();
 
-                // Cambiar al escáner de código de barras si no se detecta un código QR en unos segundos
                 setTimeout(() => {
                     scannerQR.stop();
                     scannerBarcode.init({
@@ -63,6 +61,10 @@
             } catch (error) {
                 console.error('Error al iniciar la cámara:', error);
             }
+        }
+
+        function mostrarTextoEnTitulo(texto) {
+            document.title = texto; // Establece el texto como el título de la página
         }
     </script>
 </body>
