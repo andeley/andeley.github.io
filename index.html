@@ -6,16 +6,25 @@
     <title>Lector de Códigos</title>
     <script src="https://rawgit.com/schmich/instascan-builds/master/instascan.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/quagga"></script>
+    <script src="https://cdn.rawgit.com/idevelop/camera.js/master/camera.min.js"></script>
 </head>
 <body>
     <button onclick="iniciarEscaneo()">Abrir Cámara y Escanear</button>
 
     <script>
+        let currentStream; // Almacena la referencia al stream actual
+
         async function iniciarEscaneo() {
             try {
+                if (currentStream) {
+                    // Si hay un stream actual, detener y cerrar antes de abrir uno nuevo
+                    currentStream.getTracks().forEach(track => track.stop());
+                }
+
+                const selectedCamera = await Camera.getCamera();
                 const stream = await navigator.mediaDevices.getUserMedia({
                     video: {
-                        facingMode: 'environment', // Utiliza la cámara trasera
+                        deviceId: selectedCamera.id,
                     }
                 });
 
@@ -27,18 +36,16 @@
 
                 const scannerQR = new Instascan.Scanner({ video: video });
                 scannerQR.addListener('scan', function (content) {
-                    mostrarTextoEnTitulo(content); // Llama a la función para mostrar el texto en el título
+                    mostrarTextoEnTitulo(content);
                     scannerQR.stop();
-                    video.srcObject.getTracks().forEach(track => track.stop());
-                    document.body.removeChild(video);
+                    cerrarCamara(video, stream); // Llama a la función para cerrar la cámara
                 });
 
                 const scannerBarcode = Quagga;
                 scannerBarcode.onDetected(function (result) {
                     mostrarTextoEnTitulo(result.codeResult.code);
                     scannerBarcode.stop();
-                    video.srcObject.getTracks().forEach(track => track.stop());
-                    document.body.removeChild(video);
+                    cerrarCamara(video, stream);
                 });
 
                 scannerQR.start();
@@ -64,7 +71,19 @@
         }
 
         function mostrarTextoEnTitulo(texto) {
-            document.title = texto; // Establece el texto como el título de la página
+            document.title = texto;
+        }
+
+        function cerrarCamara(video, stream) {
+            // Detener el video y liberar los recursos
+            video.srcObject = null;
+            video.pause();
+            document.body.removeChild(video);
+            
+            // Detener y cerrar el stream
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
         }
     </script>
 </body>
