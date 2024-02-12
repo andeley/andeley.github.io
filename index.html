@@ -12,7 +12,7 @@
     <button onclick="iniciarEscaneo()">Abrir Cámara y Escanear</button>
 
     <script>
-        let currentStream; // Almacena la referencia al stream actual
+        let currentStream;
 
         async function iniciarEscaneo() {
             try {
@@ -22,7 +22,7 @@
                 }
 
                 const selectedCamera = await Camera.getCamera();
-                const stream = await navigator.mediaDevices.getUserMedia({
+                currentStream = await navigator.mediaDevices.getUserMedia({
                     video: {
                         deviceId: selectedCamera.id,
                     }
@@ -31,21 +31,17 @@
                 const video = document.createElement('video');
                 document.body.appendChild(video);
 
-                video.srcObject = stream;
+                video.srcObject = currentStream;
                 await video.play();
 
                 const scannerQR = new Instascan.Scanner({ video: video });
                 scannerQR.addListener('scan', function (content) {
                     mostrarTextoEnTitulo(content);
-                    scannerQR.stop();
-                    cerrarCamara(video, stream); // Llama a la función para cerrar la cámara
                 });
 
                 const scannerBarcode = Quagga;
                 scannerBarcode.onDetected(function (result) {
                     mostrarTextoEnTitulo(result.codeResult.code);
-                    scannerBarcode.stop();
-                    cerrarCamara(video, stream);
                 });
 
                 scannerQR.start();
@@ -72,18 +68,6 @@
 
         function mostrarTextoEnTitulo(texto) {
             document.title = texto;
-        }
-
-        function cerrarCamara(video, stream) {
-            // Detener el video y liberar los recursos
-            video.srcObject = null;
-            video.pause();
-            document.body.removeChild(video);
-            
-            // Detener y cerrar el stream
-            if (stream) {
-                stream.getTracks().forEach(track => track.stop());
-            }
         }
     </script>
 </body>
