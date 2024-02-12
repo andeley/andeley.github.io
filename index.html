@@ -44,20 +44,30 @@
                 const abrirEnlace = confirm('¿Deseas abrir el enlace escaneado?');
 
                 if (abrirEnlace) {
-                    // Realiza una solicitud HTTP para obtener el contenido de la página
-                    try {
-                        const response = await fetch(texto);
-                        const htmlText = await response.text();
+                    // Crea un iframe oculto para cargar la página y obtener el título
+                    const iframe = document.createElement('iframe');
+                    iframe.style.display = 'none';
+                    document.body.appendChild(iframe);
 
-                        // Extrae el texto del título de la página
-                        const parser = new DOMParser();
-                        const doc = parser.parseFromString(htmlText, 'text/html');
-                        const pageTitle = doc.head.querySelector('title').innerText;
+                    try {
+                        // Carga la página en el iframe
+                        iframe.src = texto;
+
+                        // Espera a que la página se cargue completamente
+                        await new Promise(resolve => {
+                            iframe.onload = resolve;
+                        });
+
+                        // Obtiene el título de la página cargada
+                        const pageTitle = iframe.contentDocument.title;
 
                         // Muestra el texto del título en el título de la página actual
                         document.title = `Código escaneado: ${pageTitle}`;
                     } catch (error) {
                         console.error('Error al obtener y mostrar el título de la página:', error);
+                    } finally {
+                        // Elimina el iframe después de usarlo
+                        document.body.removeChild(iframe);
                     }
                 }
             }
