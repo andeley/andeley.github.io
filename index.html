@@ -3,11 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lector de Código QR</title>
+    <title>Lector de Código QR y de Barras</title>
 </head>
 <body>
     <button onclick="iniciarEscaneo()">Abrir Cámara y Escanear</button>
-    <h1 id="qrCodeText">Texto del Código QR</h1>
+    <h1 id="qrCodeText">Texto del Código</h1>
+
+    <script src="https://cdn.jsdelivr.net/npm/quagga@0.12.1/dist/quagga.min.js"></script>
 
     <script>
         async function iniciarEscaneo() {
@@ -21,11 +23,32 @@
 
                 const barcodeDetector = new BarcodeDetector();
 
-                const resultado = await barcodeDetector.detect(video);
-                if (resultado.length > 0) {
-                    mostrarTextoEnTitulo(resultado[0].rawValue);
+                const resultadoQR = await barcodeDetector.detect(video);
+
+                if (resultadoQR.length > 0) {
+                    mostrarTextoEnTitulo(resultadoQR[0].rawValue);
                 } else {
-                    alert('No se detectaron códigos.');
+                    // Si no se detecta un código QR, intentar con códigos de barras usando QuaggaJS
+                    Quagga.init({
+                        inputStream: {
+                            name: "Live",
+                            type: "LiveStream",
+                            target: video
+                        },
+                        decoder: {
+                            readers: ["ean_reader", "upc_reader"]
+                        }
+                    }, function (err) {
+                        if (err) {
+                            console.error('Error al inicializar QuaggaJS:', err);
+                            return;
+                        }
+                        Quagga.start();
+                        Quagga.onDetected(function (result) {
+                            Quagga.stop();
+                            mostrarTextoEnTitulo(result.codeResult.code);
+                        });
+                    });
                 }
 
                 video.srcObject.getTracks().forEach(track => track.stop());
