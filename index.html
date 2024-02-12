@@ -13,7 +13,12 @@
     <script>
         async function iniciarEscaneo() {
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        facingMode: 'environment', // Utiliza la cámara trasera
+                    }
+                });
+
                 const video = document.createElement('video');
                 document.body.appendChild(video);
 
