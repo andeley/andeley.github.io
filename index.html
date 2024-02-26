@@ -6,53 +6,22 @@
     <title>Lector de Código QR y de Barras</title>
 </head>
 <body>
-    <button onclick="iniciarEscaneo()">Abrir Cámara y Escanear</button>
+    <button onclick="iniciarEscaneo()">Abrir Cámara</button>
     <h1 id="qrCodeText">Texto del Código</h1>
 
-    <script src="https://cdn.jsdelivr.net/npm/quagga@0.12.1/dist/quagga.min.js"></script>
+    <script src="https://unpkg.com/@zxing/library@0.22.0/umd/index.min.js"></script>
 
     <script>
         async function iniciarEscaneo() {
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-                const video = document.createElement('video');
-                document.body.appendChild(video);
+                const codeReader = new ZXing.BrowserQRCodeReader();
+                const result = await codeReader.decodeFromInputVideoDevice(undefined, 'video');
 
-                video.srcObject = stream;
-                await video.play();
-
-                const barcodeDetector = new BarcodeDetector();
-
-                const resultadoQR = await barcodeDetector.detect(video);
-
-                if (resultadoQR.length > 0) {
-                    mostrarTextoEnTitulo(resultadoQR[0].rawValue);
+                if (result) {
+                    mostrarTextoEnTitulo(result.text);
                 } else {
-                    // Si no se detecta un código QR, intentar con códigos de barras usando QuaggaJS
-                    Quagga.init({
-                        inputStream: {
-                            name: "Live",
-                            type: "LiveStream",
-                            target: video
-                        },
-                        decoder: {
-                            readers: ["ean_reader", "upc_reader"]
-                        }
-                    }, function (err) {
-                        if (err) {
-                            console.error('Error al inicializar QuaggaJS:', err);
-                            return;
-                        }
-                        Quagga.start();
-                        Quagga.onDetected(function (result) {
-                            Quagga.stop();
-                            mostrarTextoEnTitulo(result.codeResult.code);
-                        });
-                    });
+                    console.log('No se pudo detectar un código.');
                 }
-
-                video.srcObject.getTracks().forEach(track => track.stop());
-                document.body.removeChild(video);
             } catch (error) {
                 console.error('Error al iniciar la cámara:', error);
             }
