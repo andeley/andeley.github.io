@@ -24,6 +24,8 @@
                 } else {
                     console.log('No se pudo detectar un código.');
                 }
+
+                detenerCamara(videoElement);
             } catch (error) {
                 console.error('Error al iniciar la cámara:', error);
             }
@@ -32,6 +34,17 @@
         function mostrarTextoEnTitulo(texto) {
             const qrCodeTextElement = document.getElementById('qrCodeText');
             qrCodeTextElement.innerText = `Código escaneado: ${texto}`;
+        }
+
+        function detenerCamara(videoElement) {
+            // Detener la reproducción del video
+            if (videoElement.srcObject) {
+                const tracks = videoElement.srcObject.getTracks();
+                tracks.forEach(track => track.stop());
+            }
+
+            // Liberar recursos de la cámara
+            videoElement.srcObject = null;
         }
     </script>
 </body>
