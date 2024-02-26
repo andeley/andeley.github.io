@@ -16,7 +16,8 @@
         async function iniciarEscaneo() {
             try {
                 const codeReader = new ZXing.BrowserQRCodeReader();
-                const result = await codeReader.decodeFromInputVideoDevice(undefined, 'video');
+                const videoElement = document.getElementById('video');
+                const result = await codeReader.decodeFromInputVideoDevice(undefined, videoElement);
 
                 if (result) {
                     mostrarTextoEnTitulo(result.text);
