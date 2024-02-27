@@ -18,12 +18,38 @@
             try {
                 const codeReader = new ZXing.BrowserQRCodeReader();
                 const videoElement = document.getElementById('video');
+
+                console.log('Iniciando cámara...');
+
+                // Inicializar QuaggaJS de manera asíncrona y esperar su finalización
+                await new Promise((resolve, reject) => {
+                    Quagga.init({
+                        inputStream: {
+                            name: "Live",
+                            type: "LiveStream",
+                            target: videoElement
+                        },
+                        decoder: {
+                            readers: ["ean_reader", "upc_reader"]
+                        }
+                    }, function (err) {
+                        if (err) {
+                            console.error('Error al inicializar QuaggaJS:', err);
+                            reject(err);
+                        } else {
+                            resolve();
+                        }
+                    });
+                });
+
+                console.log('QuaggaJS inicializado. Intentando detectar códigos de barras...');
+
                 const result = await codeReader.decodeFromInputVideoDevice(undefined, videoElement);
 
                 if (result) {
                     mostrarTextoEnTitulo(result.text);
                 } else {
-                    console.log('Intentando detectar códigos de barras...');
+                    console.log('No se detectaron códigos de barras. Intentando nuevamente...');
                     await escanearCodigosDeBarras(videoElement);
                 }
 
@@ -35,6 +61,9 @@
 
         async function escanearCodigosDeBarras(videoElement) {
             return new Promise((resolve, reject) => {
+                let intentos = 0;
+                const maxIntentos = 10; // Puedes ajustar este valor según tus necesidades
+
                 Quagga.init({
                     inputStream: {
                         name: "Live",
@@ -57,6 +86,17 @@
                         mostrarTextoEnTitulo(result.codeResult.code);
                         resolve();
                     });
+
+                    // Agregar un temporizador para detener QuaggaJS después de cierto tiempo
+                    const temporizador = setInterval(() => {
+                        intentos++;
+                        if (intentos >= maxIntentos) {
+                            console.log('No se detectaron códigos de barras después de varios intentos.');
+                            Quagga.stop();
+                            resolve();
+                            clearInterval(temporizador);
+                        }
+                    }, 1000); // Verificar cada segundo (puedes ajustar el intervalo según tus necesidades)
                 });
             });
         }
