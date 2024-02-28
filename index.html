@@ -23,13 +23,18 @@
 
                 console.log('QuaggaJS inicializado. Intentando detectar códigos de barras...');
 
-                const resultado = await escanearCodigosDeBarras(videoElement);
+                const resultadoCodigosBarras = await escanearCodigosDeBarras(videoElement);
 
-                if (resultado) {
-                    mostrarTextoEnTitulo(resultado.text || resultado.codeResult.code);
+                if (resultadoCodigosBarras) {
+                    mostrarTextoEnTitulo(resultadoCodigosBarras.codeResult.code);
                 } else {
                     console.log('No se detectaron códigos de barras. Intentando escanear QR...');
-                    await escanearQR(videoElement);
+                    const resultadoQR = await escanearQR(videoElement);
+                    if (resultadoQR) {
+                        mostrarTextoEnTitulo(resultadoQR.text);
+                    } else {
+                        console.log('No se detectaron códigos QR.');
+                    }
                 }
 
                 detenerCamara(videoElement);
