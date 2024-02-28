@@ -7,7 +7,7 @@
 </head>
 <body>
     <button onclick="iniciarEscaneo()">Abrir Cámara</button>
-    <h1 id="qrCodeText">Nro Cédula</h1>
+    <h1 id="qrCodeText">Cédula</h1>
     <video id="video" width="100%" height="auto" autoplay playsinline></video>
 
     <script src="https://cdn.jsdelivr.net/npm/quagga@0.12.1/dist/quagga.min.js"></script>
@@ -18,6 +18,10 @@
             try {
                 const videoElement = document.getElementById('video');
                 console.log('Iniciando cámara...');
+
+                // Iniciar la cámara antes de la inicialización de Quagga
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                videoElement.srcObject = stream;
 
                 await inicializarQuagga(videoElement);
 
@@ -49,7 +53,10 @@
                     inputStream: {
                         name: "Live",
                         type: "LiveStream",
-                        target: videoElement
+                        target: videoElement,
+                        constraints: {
+                            facingMode: "environment"  // Intenta usar la cámara trasera si está disponible
+                        }
                     },
                     decoder: {
                         readers: ["ean_reader", "upc_reader"]
@@ -72,6 +79,12 @@
                 Quagga.onDetected(function (resultado) {
                     Quagga.stop();
                     resolve(resultado);
+                });
+
+                Quagga.onProcessed(function (resultado) {
+                    if (resultado && resultado.codeResult) {
+                        // Puedes agregar lógica adicional según tus necesidades
+                    }
                 });
 
                 // Establecer un tiempo de espera para detener Quagga después de cierto tiempo
