@@ -6,128 +6,61 @@
     <title>Lector de Código QR y de Barras</title>
 </head>
 <body>
-    <button onclick="iniciarEscaneo()">Abrir Cámara</button>
-    <h1 id="qrCodeText">Cédula</h1>
-    <video id="video" width="100%" height="auto" autoplay playsinline></video>
+    <button onclick="iniciarEscaneo()">Abrir Cámara y Escanear</button>
+    <h1 id="qrCodeText">Texto del Código</h1>
 
     <script src="https://cdn.jsdelivr.net/npm/quagga@0.12.1/dist/quagga.min.js"></script>
-    <script type="text/javascript" src="https://unpkg.com/@zxing/library@latest/umd/index.min.js"></script>
 
     <script>
         async function iniciarEscaneo() {
             try {
-                const videoElement = document.getElementById('video');
-                console.log('Iniciando cámara...');
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                const video = document.createElement('video');
+                document.body.appendChild(video);
 
-                // Iniciar la cámara antes de la inicialización de Quagga
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                videoElement.srcObject = stream;
+                video.srcObject = stream;
+                await video.play();
 
-                await inicializarQuagga(videoElement);
+                const barcodeDetector = new BarcodeDetector();
 
-                console.log('QuaggaJS inicializado. Intentando detectar códigos de barras...');
+                const resultadoQR = await barcodeDetector.detect(video);
 
-                const resultadoCodigosBarras = await escanearCodigosDeBarras(videoElement);
-
-                if (resultadoCodigosBarras) {
-                    mostrarTextoEnTitulo(resultadoCodigosBarras.codeResult.code);
+                if (resultadoQR.length > 0) {
+                    mostrarTextoEnTitulo(resultadoQR[0].rawValue);
                 } else {
-                    console.log('No se detectaron códigos de barras. Intentando escanear QR...');
-                    const resultadoQR = await escanearQR(videoElement);
-                    if (resultadoQR) {
-                        mostrarTextoEnTitulo(resultadoQR.text);
-                    } else {
-                        console.log('No se detectaron códigos QR.');
-                    }
+                    // Si no se detecta un código QR, intentar con códigos de barras usando QuaggaJS
+                    Quagga.init({
+                        inputStream: {
+                            name: "Live",
+                            type: "LiveStream",
+                            target: video
+                        },
+                        decoder: {
+                            readers: ["ean_reader", "upc_reader"]
+                        }
+                    }, function (err) {
+                        if (err) {
+                            console.error('Error al inicializar QuaggaJS:', err);
+                            return;
+                        }
+                        Quagga.start();
+                        Quagga.onDetected(function (result) {
+                            Quagga.stop();
+                            mostrarTextoEnTitulo(result.codeResult.code);
+                        });
+                    });
                 }
 
-                detenerCamara(videoElement);
+                video.srcObject.getTracks().forEach(track => track.stop());
+                document.body.removeChild(video);
             } catch (error) {
                 console.error('Error al iniciar la cámara:', error);
             }
         }
 
-        function inicializarQuagga(videoElement) {
-            return new Promise((resolve, reject) => {
-                Quagga.init({
-                    inputStream: {
-                        name: "Live",
-                        type: "LiveStream",
-                        target: videoElement,
-                        constraints: {
-                            facingMode: "environment"  // Intenta usar la cámara trasera si está disponible
-                        }
-                    },
-                    decoder: {
-                        readers: ["ean_reader", "upc_reader"]
-                    }
-                }, function (err) {
-                    if (err) {
-                        console.error('Error al inicializar QuaggaJS:', err);
-                        reject(err);
-                    } else {
-                        resolve();
-                    }
-                });
-            });
-        }
-
-        function escanearCodigosDeBarras(videoElement) {
-            return new Promise((resolve, reject) => {
-                Quagga.start();
-
-                Quagga.onDetected(function (resultado) {
-                    Quagga.stop();
-                    resolve(resultado);
-                });
-
-                Quagga.onProcessed(function (resultado) {
-                    if (resultado && resultado.codeResult) {
-                        // Puedes agregar lógica adicional según tus necesidades
-                    }
-                });
-
-                // Establecer un tiempo de espera para detener Quagga después de cierto tiempo
-                const tiempoEspera = setTimeout(() => {
-                    console.log('No se detectaron códigos de barras después de varios intentos.');
-                    Quagga.stop();
-                    resolve(null);
-                }, 10000); // Detener después de 10 segundos (ajusta el tiempo según sea necesario)
-
-                // Opcionalmente, limpiar el tiempo de espera cuando se detecta un código de barras
-                Quagga.onDetected(function () {
-                    clearTimeout(tiempoEspera);
-                });
-            });
-        }
-
-        function escanearQR(videoElement) {
-            return new Promise((resolve, reject) => {
-                const codeReader = new ZXing.BrowserQRCodeReader();
-
-                codeReader.decodeFromInputVideoDevice(undefined, 'video', { willReadFrequently: true }).then(result => {
-                    resolve(result);
-                }).catch(error => {
-                    console.error('Error al escanear código QR:', error);
-                    resolve(null);
-                });
-            });
-        }
-
         function mostrarTextoEnTitulo(texto) {
-            const elementoTextoQR = document.getElementById('qrCodeText');
-            elementoTextoQR.innerText = `Código escaneado: ${texto}`;
-        }
-
-        function detenerCamara(videoElement) {
-            // Detener la reproducción del video
-            if (videoElement.srcObject) {
-                const pistas = videoElement.srcObject.getTracks();
-                pistas.forEach(pista => pista.stop());
-            }
-
-            // Liberar recursos de la cámara
-            videoElement.srcObject = null;
+            const qrCodeTextElement = document.getElementById('qrCodeText');
+            qrCodeTextElement.innerText = `Código escaneado: ${texto}`;
         }
     </script>
 </body>
