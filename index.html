@@ -29,12 +29,11 @@
                 stream = userStream;
                 video = document.createElement('video');
                 document.body.appendChild(video);
-                const canvas = document.getElementById("video");
-                const ctx = canvas.getContext("2d");
 
                 video.srcObject = stream;
                 video.play();
-
+                const canvas = document.getElementById("video");
+                const ctx = canvas.getContext("2d");
                 Quagga.init({
                     inputStream: {
                         name: "Live",
