@@ -4,6 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lector de Código QR y de Barras</title>
+    <style>
+        video {
+            width: 100%;
+            max-width: 600px; /* Puedes ajustar el ancho máximo según tus preferencias */
+            display: block;
+            margin: auto;
+        }
+    </style>
 </head>
 <body>
     <button onclick="iniciarEscaneo()">Abrir Cámara y Escanear</button>
@@ -12,14 +20,18 @@
     <script src="https://cdn.jsdelivr.net/npm/quagga@0.12.1/dist/quagga.min.js"></script>
 
     <script>
-        async function iniciarEscaneo() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-                const video = document.createElement('video');
+        var video;
+        var stream;
+
+        function iniciarEscaneo() {
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+            .then(function (userStream) {
+                stream = userStream;
+                video = document.createElement('video');
                 document.body.appendChild(video);
 
                 video.srcObject = stream;
-                await video.play();
+                video.play();
 
                 Quagga.init({
                     inputStream: {
@@ -37,22 +49,17 @@
                     }
                     Quagga.start();
                     Quagga.onDetected(function (result) {
-                        // No detener completamente la cámara, solo Quagga
-                        Quagga.stop();
                         mostrarTextoEnTitulo(result.codeResult.code);
                     });
                 });
-                
-                // Comentar la línea que detiene la cámara
-                // video.srcObject.getTracks().forEach(track => track.stop());
-                document.body.removeChild(video);
-            } catch (error) {
+            })
+            .catch(function (error) {
                 console.error('Error al iniciar la cámara:', error);
-            }
+            });
         }
 
         function mostrarTextoEnTitulo(texto) {
-            const qrCodeTextElement = document.getElementById('qrCodeText');
+            var qrCodeTextElement = document.getElementById('qrCodeText');
             qrCodeTextElement.innerText = `Código escaneado: ${texto}`;
         }
     </script>
