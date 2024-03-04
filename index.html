@@ -50,13 +50,18 @@
                     }
                     Quagga.start();
                     Quagga.onDetected(function (result) {
-                        // Intenta decodificar como código QR
-                        const qrCode = decodeQRCode(result);
-                        
-                        if (qrCode) {
-                            mostrarTextoEnTitulo(qrCode.data);
-                        } else {
+                        // Verifica si es un código de barras
+                        if (result.codeResult) {
                             mostrarTextoEnTitulo(result.codeResult.code);
+                        } else {
+                            // Si no es un código de barras, intenta decodificar como código QR
+                            const qrCode = decodeQRCode(result);
+                            
+                            if (qrCode) {
+                                mostrarTextoEnTitulo(qrCode.data);
+                            } else {
+                                mostrarTextoEnTitulo('No se pudo decodificar el código.');
+                            }
                         }
                     });
                 });
