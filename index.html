@@ -15,7 +15,7 @@
 </head>
 <body>
     <button onclick="iniciarEscaneo()">Abrir Cámara y Escanear</button>
-    <h1 id="qrCodeText">NRO DE DOCUMENTO IDE</h1>
+    <h1 id="qrCodeText">NRO DE DOCUMENTO</h1>
 
     <script src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2@1.2.6/dist/quagga.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
@@ -33,7 +33,7 @@
 
                 video.srcObject = stream;
                 video.play();
-                
+
                 Quagga.init({
                     inputStream: {
                         name: "Live",
@@ -50,30 +50,31 @@
                     }
                     Quagga.start();
                     Quagga.onDetected(function (result) {
-                        if (result.codeResult) {
-                            // Es un código de barras
-                            mostrarTextoEnTitulo(result.codeResult.code);
-                        } else {
-                            // Intenta decodificar como código QR
-                            const qrCode = decodeQRCode(result);
-                        
-                            if (qrCode) {
-                                mostrarTextoEnTitulo(qrCode.data);
-                            } else {
-                                console.log('No se pudo decodificar el código QR.');
-                            }
-                        }
+                        // Muestra el código de barras leído
+                        mostrarTextoEnTitulo(result.codeResult.code);
                     });
+                });
+
+                video.addEventListener('loadeddata', function () {
+                    // Utiliza JSQR para códigos QR
+                    setInterval(function () {
+                        var canvas = document.createElement('canvas');
+                        var context = canvas.getContext('2d');
+                        canvas.width = video.videoWidth;
+                        canvas.height = video.videoHeight;
+                        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                        var imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+                        var code = jsQR(imageData.data, imageData.width, imageData.height);
+
+                        if (code) {
+                            mostrarTextoEnTitulo(code.data);
+                        }
+                    }, 1000);
                 });
             })
             .catch(function (error) {
                 console.error('Error al iniciar la cámara:', error);
             });
-        }
-
-        function decodeQRCode(result) {
-            const code = jsQR(result.code, result.code.length, 1);
-            return code;
         }
 
         function mostrarTextoEnTitulo(texto) {
