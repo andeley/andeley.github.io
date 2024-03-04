@@ -15,10 +15,10 @@
 </head>
 <body>
     <button onclick="iniciarEscaneo()">Abrir Cámara y Escanear</button>
-    <h1 id="qrCodeText">NRO DE DOCUMENTO IDENTIDAD</h1>
+    <h1 id="qrCodeText">NRO DE DOCUMENTO</h1>
 
-    <!-- Link for Version 1.2.6 -->
     <script src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2@1.2.6/dist/quagga.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
 
     <script>
         var video;
@@ -41,7 +41,7 @@
                         target: video
                     },
                     decoder: {
-                        readers: ['ean_reader','upc_reader', 'code_128_reader', 'qrcode_reader'],
+                        readers: ['ean_reader', 'upc_reader', 'code_128_reader'],
                     }
                 }, function (err) {
                     if (err) {
@@ -50,13 +50,25 @@
                     }
                     Quagga.start();
                     Quagga.onDetected(function (result) {
-                        mostrarTextoEnTitulo(result.codeResult.code);
+                        // Intenta decodificar como código QR
+                        const qrCode = decodeQRCode(result);
+                        
+                        if (qrCode) {
+                            mostrarTextoEnTitulo(qrCode.data);
+                        } else {
+                            mostrarTextoEnTitulo(result.codeResult.code);
+                        }
                     });
                 });
             })
             .catch(function (error) {
                 console.error('Error al iniciar la cámara:', error);
             });
+        }
+
+        function decodeQRCode(result) {
+            const code = jsQR(result.codeResult.code, result.codeResult.code.length, 1);
+            return code;
         }
 
         function mostrarTextoEnTitulo(texto) {
