@@ -15,10 +15,10 @@
 </head>
 <body>
     <button onclick="iniciarEscaneo()">Abrir Cámara y Escanear</button>
-    <h1 id="qrCodeText">NRO DE DOCUMENTO</h1>
+    <h1 id="qrCodeText">NRO DE DOCUMENTO IDE</h1>
 
     <script src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2@1.2.6/dist/quagga.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.0.0/dist/jsQR.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
 
     <script>
         var video;
@@ -50,17 +50,17 @@
                     }
                     Quagga.start();
                     Quagga.onDetected(function (result) {
-                        // Verifica si es un código de barras
                         if (result.codeResult) {
+                            // Es un código de barras
                             mostrarTextoEnTitulo(result.codeResult.code);
                         } else {
-                            // Si no es un código de barras, intenta decodificar como código QR
+                            // Intenta decodificar como código QR
                             const qrCode = decodeQRCode(result);
-                            
+                        
                             if (qrCode) {
                                 mostrarTextoEnTitulo(qrCode.data);
                             } else {
-                                mostrarTextoEnTitulo('No se pudo decodificar el código.');
+                                console.log('No se pudo decodificar el código QR.');
                             }
                         }
                     });
@@ -72,7 +72,7 @@
         }
 
         function decodeQRCode(result) {
-            const code = jsQR(result.codeResult.code, result.codeResult.code.length, 1);
+            const code = jsQR(result.code, result.code.length, 1);
             return code;
         }
 
