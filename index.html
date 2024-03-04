@@ -21,36 +21,27 @@
                 video.srcObject = stream;
                 await video.play();
 
-                const barcodeDetector = new BarcodeDetector();
-
-                const resultadoQR = await barcodeDetector.detect(video);
-
-                if (resultadoQR.length > 0) {
-                    mostrarTextoEnTitulo(resultadoQR[0].rawValue);
-                } else {
-                    // Si no se detecta un código QR, intentar con códigos de barras usando QuaggaJS
-                    Quagga.init({
-                        inputStream: {
-                            name: "Live",
-                            type: "LiveStream",
-                            target: video
-                        },
-                        decoder: {
-                            readers: ["ean_reader", "upc_reader", "code_128_reader"]
-                        }
-                    }, function (err) {
-                        if (err) {
-                            console.error('Error al inicializar QuaggaJS:', err);
-                            return;
-                        }
-                        Quagga.start();
-                        Quagga.onDetected(function (result) {
-                            // No detener completamente la cámara, solo Quagga
-                            Quagga.stop();
-                            mostrarTextoEnTitulo(result.codeResult.code);
-                        });
+                Quagga.init({
+                    inputStream: {
+                        name: "Live",
+                        type: "LiveStream",
+                        target: video
+                    },
+                    decoder: {
+                        readers: ["ean_reader", "upc_reader", "code_128_reader"]
+                    }
+                }, function (err) {
+                    if (err) {
+                        console.error('Error al inicializar QuaggaJS:', err);
+                        return;
+                    }
+                    Quagga.start();
+                    Quagga.onDetected(function (result) {
+                        // No detener completamente la cámara, solo Quagga
+                        Quagga.stop();
+                        mostrarTextoEnTitulo(result.codeResult.code);
                     });
-                }
+                });
                 
                 // Comentar la línea que detiene la cámara
                 // video.srcObject.getTracks().forEach(track => track.stop());
