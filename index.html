@@ -32,8 +32,7 @@
 
                 video.srcObject = stream;
                 video.play();
-                const canvas = document.getElementById("video");
-                const ctx = canvas.getContext("2d");
+                
                 Quagga.init({
                     inputStream: {
                         name: "Live",
@@ -53,6 +52,8 @@
                         mostrarTextoEnTitulo(result.codeResult.code);
                     });
                 });
+                const canvas = document.getElementById("video");
+                const ctx = canvas.getContext("2d");
             })
             .catch(function (error) {
                 console.error('Error al iniciar la cámara:', error);
